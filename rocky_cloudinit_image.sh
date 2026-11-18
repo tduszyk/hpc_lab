@@ -1,13 +1,23 @@
 #!/usr/bin/env bash
 
-#FILENAME="Rocky-9-GenericCloud-Base.latest.x86_64.qcow2"
-#DIR="/var/lib/vz/templates/"
-#URL="https://dl.rockylinux.org/pub/rocky/9/images/x86_64/"
+FILENAME="Rocky-9-GenericCloud-Base.latest.x86_64.qcow2"
+DIR="/var/lib/vz/templates/"
+URL="https://dl.rockylinux.org/pub/rocky/9/images/x86_64/"
 
 usage() {
-	cat <<-EOF
-	Usage: rocky_cloudinit_image.sh id memory cores disk_size
-	Example: rocky_cloudinit_image.sh <id> <memory> <cores> <disk_size>
+	cat >&2 <<-EOF
+
+	Usage: ${0##*/} <id> <memory> <cores> <disk_size>
+
+	Arguments: 
+	  id		Proxmox VM ID (eg 9000)
+	  memory	Memory in MiB (eg 2048)
+	  cores		Number of CPU cores (eg 2)
+	  disk_size	Disk size (eg 10G)
+
+	Example:
+	  ${0##*/} 9000 2048 2 10G
+
 	EOF
 }
 
