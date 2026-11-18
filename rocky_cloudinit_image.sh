@@ -1,24 +1,67 @@
 #!/usr/bin/env bash
 
-FILENAME="Rocky-9-GenericCloud-Base.latest.x86_64.qcow2"
-DIR="/var/lib/vz/templates/"
-URL="https://dl.rockylinux.org/pub/rocky/9/images/x86_64/"
+#FILENAME="Rocky-9-GenericCloud-Base.latest.x86_64.qcow2"
+#DIR="/var/lib/vz/templates/"
+#URL="https://dl.rockylinux.org/pub/rocky/9/images/x86_64/"
 
 usage() {
 	cat <<-EOF
 	Usage: rocky_cloudinit_image.sh id memory cores disk_size
-	echo;echo;echo
+	Example: rocky_cloudinit_image.sh <id> <memory> <cores> <disk_size>
 	EOF
 }
 
 download() {
-	if [[ ! -f "$DIR$FILENAME" ]]; then
-		echo "Downloading the latest image..."; echo
-		cd "$DIR"
-		wget "$URL$FILENAME"
-	else
-		echo "The image exists on the disk."; echo
-	fi
+    	local target_file="${DIR%/}/${FILENAME}"
+    	local temp_file="${target_file}.part"
+    	local checksum_url="${URL%/}/${FILENAME}.CHECKSUM"
+
+    	# 1. Ensure the target directory exists
+    	if ! mkdir -p "$DIR"; then
+        	echo "Error: Failed to create or access directory $DIR" >&2
+        	return 1
+    	fi
+
+    	# 2. Fetch the official SHA256 checksum first to check if we already have the exact version
+    	local expected_sha256
+    	expected_sha256=$(curl -fsSL "$checksum_url" | awk '/SHA256/ {print $NF}')
+    
+    	if [[ -z "$expected_sha256" ]]; then
+        	echo "Error: Could not retrieve remote checksum from $checksum_url" >&2
+        	return 1
+    	fi
+
+    	# 3. Check if file exists AND matches the latest remote checksum
+    	if [[ -f "$target_file" ]]; then
+        	local local_sha256
+        	local_sha256=$(sha256sum "$target_file" | awk '{print $1}')
+        	if [[ "$local_sha256" == "$expected_sha256" ]]; then
+            		echo "Latest image already exists and passed SHA256 verification."
+            		return 0
+        	else
+            		echo "Local image is outdated or corrupted. Re-downloading..."
+        	fi
+    	fi
+
+    	# 4. Download to a .part file first, then atomically rename upon success
+    	echo "Downloading ${FILENAME}..."
+    	if ! wget -q --show-progress -O "$temp_file" "${URL%/}/${FILENAME}"; then
+        	echo "Error: Download failed." >&2
+        	rm -f "$temp_file"
+        	return 1
+    	fi
+
+    	# 5. Verify checksum of the newly downloaded file before moving it into place
+    	local downloaded_sha256
+    	downloaded_sha256=$(sha256sum "$temp_file" | awk '{print $1}')
+    	if [[ "$downloaded_sha256" != "$expected_sha256" ]]; then
+        	echo "Error: Checksum mismatch! Expected $expected_sha256, got $downloaded_sha256" >&2
+        	rm -f "$temp_file"
+        	return 1
+    	fi
+
+    	mv -f "$temp_file" "$target_file"
+    	echo "Download verified and saved to $target_file."
 }
 
 deploy_vm() {
