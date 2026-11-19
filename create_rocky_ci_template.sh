@@ -43,7 +43,12 @@ Example:
 EOF
 }
 
+validate_args() {
 
+}
+
+preflight_checks() {
+}
 
 download() {
     	local target_file="${DIR%/}/${FILENAME}"
@@ -111,6 +116,11 @@ deploy_vm() {
 	qm template $1
 }
 
-usage
-download
-deploy_vm
+main(){
+  validate_args
+  preflight_checks
+  download
+  deploy_vm
+}
+
+main
