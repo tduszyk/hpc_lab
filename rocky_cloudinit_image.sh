@@ -1,24 +1,34 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
+# Configuration defaults (can be overwritten via environment variables)
 FILENAME="Rocky-9-GenericCloud-Base.latest.x86_64.qcow2"
-DIR="/var/lib/vz/templates/"
+DIR="/var/lib/vz/templates"
 URL="https://dl.rockylinux.org/pub/rocky/9/images/x86_64/"
+STORAGE="${STORAGE:-local-lvm}"
+VM_NAME="${VM_NAME:-rocky9-tmpl}"
+CI_USER="${CI_USER:-admin}"
+SSH_KEY="${SSH_KEY:-${HOME}/.ssh/id_ed25519.pub}"
+
+# State tracking for cleanup trap
+TEMP_FILE=""
+CREATED_VMID=""
 
 usage() {
-	cat >&2 <<-EOF
+    cat >&2 <<-EOF
 
-	Usage: ${0##*/} <id> <memory> <cores> <disk_size>
+Usage: ${0##*/} <id> <memory> <cores> <disk_size>
 
-	Arguments: 
-	  id		Proxmox VM ID (eg 9000)
-	  memory	Memory in MiB (eg 2048)
-	  cores		Number of CPU cores (eg 2)
-	  disk_size	Disk size (eg 10G)
+Arguments: 
+  id		Proxmox VM ID (eg 9000)
+  memory	Memory in MiB (eg 2048)
+  cores		Number of CPU cores (eg 2)
+  disk_size	Disk size (eg 10G)
 
-	Example:
-	  ${0##*/} 9000 2048 2 10G
+Example:
+  ${0##*/} 9000 2048 2 10G
 
-	EOF
+EOF
 }
 
 download() {
