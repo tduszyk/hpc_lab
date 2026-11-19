@@ -14,6 +14,18 @@ SSH_KEY="${SSH_KEY:-${HOME}/.ssh/id_ed25519.pub}"
 TEMP_FILE=""
 CREATED_VMID=""
 
+cleanup() {
+  local exit_code=$?
+  if [[ -n "$TEMP_FILE" && -f "$TEMP_FILE" ]]; then
+    rm -f "$TEMP_FILE"
+  fi
+  if [[ $exit_code -ne 0 && -n "$CREATED_VMID" ]]; then
+    echo "Error detected. Rolling back partially created VM ${CREATED_VMID}..." >&2
+    qm destroy "$CREATED_VMID" --purge &>/dev/null || true
+  fi
+}
+trap cleanup EXIT
+
 usage() {
     cat >&2 <<-EOF
 
@@ -30,6 +42,8 @@ Example:
 
 EOF
 }
+
+
 
 download() {
     	local target_file="${DIR%/}/${FILENAME}"
