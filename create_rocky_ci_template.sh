@@ -79,6 +79,30 @@ validate_args() {
 }
 
 preflight_checks() {
+  local vm_id="$1"
+
+  if (( EUID != 0 )); then
+    echo "Error: This script must be run as root." >&2
+    exit 1
+  fi
+
+  local cmd
+  for cmd in qm curl wget sha256sum awk; do
+    if ! command -v "$cmd" &>/dev/null; then
+      echo "Error: Required command '$cmd' is not installed." >&2
+      exit 1
+    fi
+  done
+
+  if [[ ! -r "SSH_KEY" ]]; then
+    echo "Error: SSH public key not found or unreadable at $SSH_KEY" >&2
+    exit 1
+  fi
+
+  if qm status "$vm_id" &>/dev/null; then
+    echo "Error: VM or template with ID $vm_id already exists." >&2
+    exit 1
+  fi
 }
 
 download() {
