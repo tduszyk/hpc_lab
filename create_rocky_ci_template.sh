@@ -44,7 +44,38 @@ EOF
 }
 
 validate_args() {
+  if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+    usage
+    exit 0
+  fi
 
+  if (( $# != 4 )); then
+    echo "Error: Expected 4 arguments, got $#." >&2
+    usage
+    exit 1
+  fi
+
+  local vm_id="$1" memory="$2" cores="$3" disk_size="$4"
+
+  if ! [[ "$vm_id" =~ ^[0-9]+$ ]] || (( vm_id < 100 || vm_id > 999999999 )); then
+    echo "Error: VM ID must be an integer between 100 and 999999999 (got '$vm_id')." >&2
+    exit 1
+  fi
+
+  if ! [[ "$memory" =~ ^[0-9]+$ ]] || (( memory < 512 )); then
+    echo "Error: Memory must be an integer >= 512 MiB (got '$memory')." >&2
+    exit 1
+  fi
+
+  if ! [[ "$cores" =~ ^[0-9]+$ ]] || ((cores < 1)); then
+    echo "Error: Cores must be an integer >=1 (got '$cores')." >&2
+    exit 1
+  fi
+  
+  if ! [[ "$disk_size" =~ ^\+?[0-9]+[KMGT]$ ]]; then
+    echo "Error: Disk size must match format like 10G or +10G (got '$disk_size')." >&2
+    exit 1
+  fi
 }
 
 preflight_checks() {
