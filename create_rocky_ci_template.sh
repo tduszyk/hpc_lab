@@ -94,7 +94,7 @@ preflight_checks() {
     fi
   done
 
-  if [[ ! -r "SSH_KEY" ]]; then
+  if [[ ! -r "$SSH_KEY" ]]; then
     echo "Error: SSH public key not found or unreadable at $SSH_KEY" >&2
     exit 1
   fi
