@@ -176,7 +176,7 @@ deploy_vm() {
     --net1 virtio,bridge=vmbr1 \
     --scsihw virtio-scsi-single \
     --ostype l26 \
-    --agent enabled=1,fstrim_cloned_disk=1
+    --agent enabled=1,fstrim_cloned_disks=1
 
   # Track VM ID so the EXIT trap destroys it if any subsequent command fails
   CREATED_VMID="$vm_id"
