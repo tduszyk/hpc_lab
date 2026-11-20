@@ -169,16 +169,35 @@ deploy_vm() {
 
   qm create "$vm_id" \
     --name "$VM_NAME" \
-    --memory
+    --memory "$memory" \
+    --cores "$cores" \
+    --cpu host \
+    --net0 virtio,bridge=vmbr0 \
+    --net1 virtio,bridge=vmbr1 \
+    --scsihw virtio-scsi-single \
+    --ostype l26 \
+    --agent enabled=1,fstrim_cloned_disk=1
 
-  
+  # Track VM ID so the EXIT trap destroys it if any subsequent command fails
+  CREATED_VMID="$vm_id"
+
+  qm disk import "$vm_id" "$image_path" "$STORAGE"
+  qm set "$vm_id" --scsi0 "${STORAGE}:vm-${vm_id}-disk-0,discard=on,iothread=1" --boot order=scsi0
+  qm set "$vm_id" --ide2 "${STORAGE}:cloudinit" --serial0 socket --vga serial0
+  qm set "$vm_id" --ciuser "$CI_USER" --sshkeys "$SSH_KEY" --ipconfig0 ip=dhcp
+  qm disk resize "$vm_id" scsi0 "$disk_size"
+  qm template "$vm_id"
+
+  # Success: disarm rollback
+  CREATE_VMID=""
+  echo "Template VM ${vm_id} (${vm_NAME}) created successfully."
 }
 
 main(){
-  validate_args
-  preflight_checks
-  download
-  deploy_vm
+  validate_args "$@"
+  preflight_checks "$1"
+  download 
+  deploy_vm "$@"
 }
 
-main
+main "$@"
