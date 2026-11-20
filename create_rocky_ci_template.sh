@@ -189,8 +189,8 @@ deploy_vm() {
   qm template "$vm_id"
 
   # Success: disarm rollback
-  CREATE_VMID=""
-  echo "Template VM ${vm_id} (${vm_NAME}) created successfully."
+  CREATED_VMID=""
+  echo "Template VM ${vm_id} (${VM_NAME}) created successfully."
 }
 
 main(){
