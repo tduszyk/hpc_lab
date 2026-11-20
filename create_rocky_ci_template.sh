@@ -107,8 +107,8 @@ preflight_checks() {
 
 download() {
     	local target_file="${DIR%/}/${FILENAME}"
-    	local temp_file="${target_file}.part"
     	local checksum_url="${URL%/}/${FILENAME}.CHECKSUM"
+    	TEMP_FILE="${target_file}.part"
 
     	# 1. Ensure the target directory exists
     	if ! mkdir -p "$DIR"; then
@@ -139,36 +139,39 @@ download() {
 
     	# 4. Download to a .part file first, then atomically rename upon success
     	echo "Downloading ${FILENAME}..."
-    	if ! wget -q --show-progress -O "$temp_file" "${URL%/}/${FILENAME}"; then
+    	if ! wget -q --show-progress -O "$TEMP_FILE" "${URL%/}/${FILENAME}"; then
         	echo "Error: Download failed." >&2
-        	rm -f "$temp_file"
+        	rm -f "$TEMP_FILE"
         	return 1
     	fi
 
     	# 5. Verify checksum of the newly downloaded file before moving it into place
     	local downloaded_sha256
-    	downloaded_sha256=$(sha256sum "$temp_file" | awk '{print $1}')
+    	downloaded_sha256=$(sha256sum "$TEMP_FILE" | awk '{print $1}')
     	if [[ "$downloaded_sha256" != "$expected_sha256" ]]; then
         	echo "Error: Checksum mismatch! Expected $expected_sha256, got $downloaded_sha256" >&2
-        	rm -f "$temp_file"
+        	rm -f "$TEMP_FILE"
         	return 1
     	fi
 
-    	mv -f "$temp_file" "$target_file"
+    	mv -f "$TEMP_FILE" "$target_file"
     	echo "Download verified and saved to $target_file."
 }
 
 deploy_vm() {
-	echo Creating a VM vm_id:$1 memory:$2 cpu_cores:$3 disk_size:$4
-	qm create $1 --name rocky9-tmpl --memory $2 --cores $3 --cpu host \
-	  --net0 virtio,bridge=vmbr0 --net1 virtio,bridge=vmbr1 \
-	  --scsihw virtio-scsi-single --ostype l26 --agent enabled=1
-	qm disk import $1 Rocky-9-GenericCloud-Base.latest.x86_64.qcow2 local-lvm
-	qm set $1 --scsi0 local-lvm:vm-$1-disk-0,discard=on,iothread=1 --boot order=scsi0
-	qm set $1 --ide2 local-lvm:cloudinit --serial0 socket --vga serial0
-	qm set $1 --ciuser admin --sshkeys ~/.ssh/id_ed25519.pub --ipconfig0 ip=dhcp
-	qm resize $1 scsi0 $4
-	qm template $1
+  local vm_id="$1"
+  local memory="$2"
+  local cores="$3"
+  local disk_size="$4"
+  local image_path="${DIR%/}/${FILENAME}"
+
+  echo "Creating a VM (id=${vm_id}, mem=${memory}NiB, cores=${cores}, disk=${disk_size})..."
+
+  qm create "$vm_id" \
+    --name "$VM_NAME" \
+    --memory
+
+  
 }
 
 main(){
