@@ -1,0 +1,12 @@
+[Unit]
+Description=Node Health Telemetry Check
+After=network-online.target
+
+[Service]
+Type=oneshot
+DynamicUser=yes
+ExecStart=/usr/local/bin/node-health-check.sh
+ProtectSystem=strict
+ProtectHome=yes
+NoNewPrivileges=yes
+PrivilegeTmp=yes

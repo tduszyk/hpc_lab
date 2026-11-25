@@ -1,0 +1,32 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for ansible/roles/node_health
+- name: Install node-health telemetry script with bin_t SELinux label
+  ansible.builtin.copy:
+    src: node-health-check.sh
+    dest: /usr/local/bin/node-health-check.sh
+    owner: root
+    group: root
+    mode: "0755"
+    setype: bin_t
+
+- name: Deploy node-healt systemd service and their units
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    setype: systemd_unit_file_t
+  loop:
+    - node-health.service
+    - node-health.timer
+  notify: Reload systemd
+
+- name: Flush handlers before enabling timer
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable and start node-health.timer
+  ansible.builtin.systemd:
+    name: node-health.timer
+    enabled: true
+    state: started

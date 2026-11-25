@@ -1,0 +1,6 @@
+---
+- name: Apply baseline cluster telemetry
+  hosts: cluster
+  become: true
+  roles:
+    - node_health

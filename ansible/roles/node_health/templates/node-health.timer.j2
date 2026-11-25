@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Node Health Telemetry on schedule
+
+[Timer]
+OnCalendar={{ node_health_calendar }}
+AccuracySec={{ node_health_accuracy }}
+Persistent=true
+
+[Install]
+WnatedBy=timers.target
