@@ -1,0 +1,9 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for roles/vlan_fabric
+vlan_fabric_conn_name: "vlan20"
+vlan_fabric_parent_dev: "eth1"
+vlan_fabric_id: 20
+vlan_fabric_ifname: "{{ vlan_fabric_parent_dev }}.{{ vlan_fabric_id }}"
+vlan_fabric_mtu: 1500
+

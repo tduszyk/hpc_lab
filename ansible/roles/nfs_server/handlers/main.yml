@@ -1,0 +1,7 @@
+#SPDX-License-Identifier: MIT-0
+---
+# handlers file for roles/nfs_server
+- name: Reload NFS exports
+  ansible.builtin.command:
+    cmd: exportfs -rav
+  changed_when: true

@@ -4,3 +4,16 @@
   become: true
   roles:
     - node_health
+    - vlan_fabric
+
+- name: Configure NFSv4 storage server
+  hosts: head_nodes
+  become: true
+  roles:
+    - nfs_server
+
+- name: Configure NFSv4 autofs clients
+  hosts: compute
+  become: true
+  roles:
+    - nfs_client

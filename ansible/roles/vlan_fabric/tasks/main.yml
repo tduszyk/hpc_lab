@@ -1,0 +1,29 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for roles/vlan_fabric
+- name: Validate that vlan_fabric_ip is defined for this host
+  ansible.builtin.assert:
+    that:
+      - vlan_fabric_ip is defined
+      - vlan_fabric_ip | length > 0
+    fail_msg: "Set vlan_fabric_ip in host_vars/{{ inventory_hostname }}.yml before applying vlan."
+
+- name: Ensure NetorkManager is enabled and running
+  ansible.builtin.systemd:
+    name: NetworkManager
+    enabled: true
+    state: started
+
+- name: Configure 802.1Q VLAN sub-interface via NetworkManager
+  community.general.nmcli:
+    type: vlan
+    conn_name: "{{ vlan_fabric_conn_name }}"
+    ifname: "{{ vlan_fabric_ifname }}"
+    vlandev: "{{ vlan_fabric_parent_dev }}"
+    vlanid: "{{ vlan_fabric_id }}"
+    ip4: "{{ vlan_fabric_ip }}"
+    method4: manual
+    method6: disabled
+    mtu: "{{ vlan_fabric_mtu }}"
+    autoconnect: true
+    state: present

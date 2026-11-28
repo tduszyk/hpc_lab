@@ -1,0 +1,33 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for roles/nfs_client
+- name: Install NFS client and autofs packages
+  ansible.builtin.dnf:
+    name:
+      - nfs-utils
+      - autofs
+    state: present
+
+- name: Deploy autofs master drop-in for HPC shares
+  ansible.builtin.template:
+    src: hpc.autofs.j2
+    dest: /etc/auto.master.d/hpc.autofs
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart autofs
+
+- name: Deploy autofs indirect map for HPC shares
+  ansible.builtin.template:
+    src: auto.hpc.j2
+    dest: /etc/auto.j2
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart autofs
+
+- name: Flush handlers before verifying autofs service
+  ansible.builtin.systemd:
+    name: autofs
+    enabled: yes
+    state: started

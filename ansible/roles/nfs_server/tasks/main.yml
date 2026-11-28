@@ -1,0 +1,46 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for roles/nfs_server
+- name: Install NFS server and firewalld packages
+  ansible.builtin.dnf:
+    name:
+      - nfs-utils
+      - firewalld
+      - python3-firewall
+    state: present
+
+- name: Ensure firewalld is enabled and running
+  ansible.builtin.systemd:
+    name: firewalld
+    enabled: true
+    state: started
+
+- name: Allow NFS service through firewalld
+  ansible.posix.firewalld:
+    service: nfs
+    permanent: true
+    immediate: true
+    state: enabled
+
+- name: Ensure NFS export directory exists
+  ansible.builtin.file:
+    path: "{{ nfs_server_export_path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy NFS exports configuration
+  ansible.builtin.template:
+    src: hpc.exports.j2
+    dest: /etc/exports.d/hpc.exports
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload NFS exports
+
+- name: Ensure nfs-server is enabled and running
+  ansible.builtin.systemd:
+    name: nfs-server
+    enabled: true
+    state: started

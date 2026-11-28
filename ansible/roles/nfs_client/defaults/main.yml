@@ -1,0 +1,9 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for roles/nfs_client
+nfs_client_server_ip: "10.10.0.10"
+nfs_client_export_path: "/srv/nfs/shared"
+nfs_client_mount_base: "/mnt/hpc"
+nfs_client_mount_key: "shared"
+nfs_client_mount_opts: "fstype=nfs4,rw,soft"
+nfs_client_timeout: 30
